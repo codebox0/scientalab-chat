@@ -1,0 +1,73 @@
+# Docker Compose configuration for Scienta Lab Chat
+# This file defines all services needed to run the application
+# Author: Scienta Lab Team
+# Last updated: 2025
+
+services:
+  # Backend service
+  backend:
+    image: ghcr.io/${GH_USERNAME}/scientalab-backend:main
+    container_name: scientalab-backend
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-4001}
+      - HOST=${HOST:-0.0.0.0}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - API_URL=${API_URL}
+      - BIOMCP_URL=${BIOMCP_URL:-https://biomcp-server-452652483423.europe-west4.run.app}
+      - BIO_MCP_SSE_PATH=${BIO_MCP_SSE_PATH:-/sse}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://0.0.0.0:4001/",
+        ]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.docker.compose.cache=true"
+
+  # Frontend service
+  frontend:
+    image: ghcr.io/${GH_USERNAME}/scientalab-frontend:main
+    container_name: scientalab-frontend
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - HOST=${HOST:-0.0.0.0}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://0.0.0.0:3003/",
+        ]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.docker.compose.cache=true"
+
+networks:
+  scientalab-network:
+    name: scientalab-network
+    driver: bridge
