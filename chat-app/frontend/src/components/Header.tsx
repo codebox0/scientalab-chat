@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface HeaderProps {
   onLogout: () => void;
@@ -10,6 +11,7 @@ interface HeaderProps {
   userId?: string;
   sessionId?: string;
   hasAssistantReplied?: boolean;
+  onSearch?: (query: string) => void;
 }
 
 const Header = ({
@@ -18,12 +20,29 @@ const Header = ({
   isExportingPDF = false,
   hasAssistantReplied = false,
   userId,
+  onSearch,
 }: HeaderProps) => {
   const router = useRouter();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleLogout = () => {
     onLogout();
     router.push("/");
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim() && onSearch) {
+      onSearch(searchQuery);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    if (onSearch) {
+      onSearch("");
+    }
   };
 
   return (
@@ -35,22 +54,132 @@ const Header = ({
             <div className="w-8 h-8 bg-[#60A5FA] rounded-full flex items-center justify-center text-white font-bold text-sm">
               SL
             </div>
-            <h1 className="text-lg font-semibold text-gray-900">
-              Scienta Lab
-            </h1>
+            <h1 className="text-lg font-semibold text-gray-900">Scienta Lab</h1>
           </div>
           {userId && (
             <div className="flex items-center space-x-2 px-3 py-1 bg-gray-100 rounded-lg">
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <svg
+                className="w-4 h-4 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
               </svg>
-              <span className="text-sm font-medium text-gray-700">{userId}</span>
+              <span className="text-sm font-medium text-gray-700">
+                {userId}
+              </span>
             </div>
           )}
         </div>
 
-        {/* Boutons d'action */}
+        {/* Search bar and action buttons */}
         <div className="flex items-center space-x-3">
+          {/* Search - Smart integration */}
+          {onSearch && (
+            <div className="flex items-center">
+              {isSearchOpen ? (
+                <form
+                  onSubmit={handleSearchSubmit}
+                  className="flex items-center space-x-2"
+                >
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Rechercher..."
+                      className="pl-9 pr-9 py-2 text-sm border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#60A5FA] focus:border-transparent w-64"
+                      autoFocus
+                    />
+                    <svg
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={handleClearSearch}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSearchOpen(false);
+                      handleClearSearch();
+                    }}
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Fermer la recherche"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </form>
+              ) : (
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Rechercher dans les messages"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Export PDF - icône uniquement */}
           {onExportPDF && hasAssistantReplied && (
             <button

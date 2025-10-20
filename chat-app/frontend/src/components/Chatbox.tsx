@@ -44,6 +44,8 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [isExportingPDF, setIsExportingPDF] = useState<boolean>(false);
   const [exportSuccess, setExportSuccess] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // WebSocket connection
@@ -216,6 +218,29 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
     }
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setHighlightedMessageId(null);
+
+    if (!query.trim()) {
+      return;
+    }
+
+    // Find first matching message
+    const matchingMessage = messages.find((msg) =>
+      msg.content.toLowerCase().includes(query.toLowerCase())
+    );
+
+    if (matchingMessage) {
+      setHighlightedMessageId(matchingMessage.id);
+      // Scroll to the message
+      setTimeout(() => {
+        const element = document.getElementById(`message-${matchingMessage.id}`);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+    }
+  };
+
   const handleExportPDF = async () => {
     setIsExportingPDF(true);
     setError("");
@@ -302,6 +327,7 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
         userId={username}
         sessionId={sessionId}
         hasAssistantReplied={messages.some((m) => m.role === "assistant")}
+        onSearch={handleSearch}
       />
 
       {/* Zone de messages - plein écran */}
@@ -475,11 +501,21 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
                 message.id,
                 message.content.substring(0, 50)
               );
+              const isHighlighted = highlightedMessageId === message.id;
+              const matchesSearch = searchQuery && message.content.toLowerCase().includes(searchQuery.toLowerCase());
+
               return (
-                <MessageBubble
+                <div
                   key={message.id || `message-${index}`}
-                  message={message}
-                />
+                  id={`message-${message.id}`}
+                  className={`transition-all duration-300 ${
+                    isHighlighted ? "ring-2 ring-[#60A5FA] rounded-2xl" : ""
+                  } ${
+                    matchesSearch && !isHighlighted ? "opacity-100" : searchQuery && !matchesSearch ? "opacity-30" : "opacity-100"
+                  }`}
+                >
+                  <MessageBubble message={message} />
+                </div>
               );
             })}
 
