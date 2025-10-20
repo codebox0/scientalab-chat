@@ -63,25 +63,44 @@ jobs:
             type=sha
 
       - name: Build & push backend with retry
-        uses: nick-fields/retry-action@v2
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          retry_wait_seconds: 30
-          command: |
-            TAGS="${{ steps.meta.outputs.tags }}"
-            TAG_ARGS=""
-            for tag in $TAGS; do
-              TAG_ARGS="$TAG_ARGS --tag $tag"
-            done
+        run: |
+          TAGS="${{ steps.meta.outputs.tags }}"
+          TAG_ARGS=""
+          for tag in $TAGS; do
+            TAG_ARGS="$TAG_ARGS --tag $tag"
+          done
 
-            docker buildx build \
+          # Retry logic with 3 attempts
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          SUCCESS=false
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$SUCCESS" = "false" ]; do
+            echo "🔄 Build attempt $ATTEMPT of $MAX_ATTEMPTS..."
+
+            if docker buildx build \
               --file ./chat-app/backend/Dockerfile \
               --platform linux/amd64 \
               $TAG_ARGS \
               --push \
               --progress plain \
-              .
+              . ; then
+              SUCCESS=true
+              echo "✅ Build succeeded on attempt $ATTEMPT"
+            else
+              echo "❌ Build failed on attempt $ATTEMPT"
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "⏳ Waiting 30 seconds before retry..."
+                sleep 30
+              fi
+              ATTEMPT=$((ATTEMPT + 1))
+            fi
+          done
+
+          if [ "$SUCCESS" = "false" ]; then
+            echo "❌ Build failed after $MAX_ATTEMPTS attempts"
+            exit 1
+          fi
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -134,19 +153,22 @@ jobs:
             type=sha
 
       - name: Build & push frontend with retry
-        uses: nick-fields/retry-action@v2
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          retry_wait_seconds: 30
-          command: |
-            TAGS="${{ steps.meta.outputs.tags }}"
-            TAG_ARGS=""
-            for tag in $TAGS; do
-              TAG_ARGS="$TAG_ARGS --tag $tag"
-            done
+        run: |
+          TAGS="${{ steps.meta.outputs.tags }}"
+          TAG_ARGS=""
+          for tag in $TAGS; do
+            TAG_ARGS="$TAG_ARGS --tag $tag"
+          done
 
-            docker buildx build \
+          # Retry logic with 3 attempts
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          SUCCESS=false
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$SUCCESS" = "false" ]; do
+            echo "🔄 Build attempt $ATTEMPT of $MAX_ATTEMPTS..."
+
+            if docker buildx build \
               --file ./chat-app/frontend/Dockerfile \
               --platform linux/amd64 \
               --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
@@ -154,7 +176,23 @@ jobs:
               $TAG_ARGS \
               --push \
               --progress plain \
-              .
+              . ; then
+              SUCCESS=true
+              echo "✅ Build succeeded on attempt $ATTEMPT"
+            else
+              echo "❌ Build failed on attempt $ATTEMPT"
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "⏳ Waiting 30 seconds before retry..."
+                sleep 30
+              fi
+              ATTEMPT=$((ATTEMPT + 1))
+            fi
+          done
+
+          if [ "$SUCCESS" = "false" ]; then
+            echo "❌ Build failed after $MAX_ATTEMPTS attempts"
+            exit 1
+          fi
 
   # ===== DEPLOY JOB (AFTER ALL BUILDS) =====
   deploy:
