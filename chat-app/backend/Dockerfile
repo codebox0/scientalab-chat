@@ -1,5 +1,5 @@
 # Dockerfile pour le backend NestJS avec Puppeteer
-FROM node:18-slim AS builder
+FROM ghcr.io/library/node:18-slim AS builder
 
 # Définir le répertoire de travail
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY chat-app/backend/ .
 RUN npm run build
 
 # Stage de production avec Chrome pour Puppeteer
-FROM node:18-slim AS production
+FROM ghcr.io/library/node:18-slim AS production
 
 # Installer Chrome et ses dépendances pour Puppeteer
 RUN apt-get update && apt-get install -y \

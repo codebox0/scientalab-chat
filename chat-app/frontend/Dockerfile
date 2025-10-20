@@ -1,5 +1,5 @@
 # Dockerfile pour le frontend Next.js
-FROM node:18-alpine AS base
+FROM ghcr.io/library/node:18-alpine AS base
 
 # Installer les dépendances seulement quand nécessaire
 FROM base AS deps
