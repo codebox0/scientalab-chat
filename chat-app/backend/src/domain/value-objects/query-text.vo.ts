@@ -84,47 +84,108 @@ export class QueryTextVO {
   }
 
   /**
-   * Detect the query type
+   * Detect the query type with enhanced multi-language support
    * @returns The query type
    */
   detectQueryType(): 'literature' | 'trial' | 'variant' | 'drug' | 'general' {
-    this.toLowerCase();
+    const lowercaseValue = this.toLowerCase();
 
+    // Priority 1: Genetic variants (highest specificity)
+    // Check for rs identifiers, specific mutation patterns
     if (
-      this.contains('paper') ||
-      this.contains('article') ||
-      this.contains('study') ||
-      this.contains('literature')
-    ) {
-      return 'literature';
-    }
-
-    if (
-      this.contains('trial') ||
-      this.contains('clinical') ||
-      this.contains('phase') ||
-      this.contains('nct')
-    ) {
-      return 'trial';
-    }
-
-    if (
+      /\brs\d+\b/.test(lowercaseValue) ||
       this.contains('variant') ||
-      this.contains('rs') ||
       this.contains('mutation') ||
-      this.contains('gene')
+      this.contains('snp') ||
+      this.contains('polymorphism') ||
+      this.contains('allele') ||
+      this.contains('genotype') ||
+      this.contains('genetic variant') ||
+      /\b[A-Z]\d+[A-Z]\b/.test(this.value) || // e.g., V600E
+      this.contains('dbsnp')
     ) {
       return 'variant';
     }
 
+    // Priority 2: Clinical trials (very specific keywords)
+    // English + French keywords
     if (
-      this.contains('drug') ||
+      this.contains('clinical trial') ||
+      this.contains('essai clinique') ||
+      this.contains('essai') ||
+      this.contains('trial') ||
+      this.contains('phase i') ||
+      this.contains('phase ii') ||
+      this.contains('phase iii') ||
+      this.contains('phase iv') ||
+      this.contains('randomized') ||
+      this.contains('randomis') ||
+      this.contains('placebo') ||
+      this.contains('nct') ||
+      this.contains('clinicaltrials.gov') ||
+      this.contains('intervention') ||
+      this.contains('recruitment') ||
+      this.contains('recrutement') ||
+      this.contains('study protocol') ||
+      this.contains('protocole')
+    ) {
+      return 'trial';
+    }
+
+    // Priority 3: Drug/medication queries
+    // English + French keywords
+    if (
+      this.contains('drug interaction') ||
       this.contains('medication') ||
-      this.contains('therapeutic')
+      this.contains('medicament') ||
+      this.contains('médicament') ||
+      this.contains('therapeutic') ||
+      this.contains('thérapeutique') ||
+      this.contains('treatment') ||
+      this.contains('traitement') ||
+      this.contains('inhibitor') ||
+      this.contains('inhibiteur') ||
+      this.contains('antibody') ||
+      this.contains('anticorps') ||
+      this.contains('pharmacology') ||
+      this.contains('pharmacologie') ||
+      this.contains('side effect') ||
+      this.contains('effet secondaire') ||
+      this.contains('dosage') ||
+      this.contains('posologie')
     ) {
       return 'drug';
     }
 
+    // Priority 4: Literature search (most common, lower priority)
+    // English + French keywords
+    if (
+      this.contains('paper') ||
+      this.contains('article') ||
+      this.contains('publication') ||
+      this.contains('study') ||
+      this.contains('étude') ||
+      this.contains('literature') ||
+      this.contains('littérature') ||
+      this.contains('research') ||
+      this.contains('recherche') ||
+      this.contains('pubmed') ||
+      this.contains('abstract') ||
+      this.contains('résumé') ||
+      this.contains('review') ||
+      this.contains('revue') ||
+      this.contains('meta-analysis') ||
+      this.contains('meta-analyse') ||
+      this.contains('systematic review') ||
+      this.contains('find papers') ||
+      this.contains('trouve') ||
+      this.contains('cherche')
+    ) {
+      return 'literature';
+    }
+
+    // Default: General biomedical query
+    // Will use LLM without specific biomedical data
     return 'general';
   }
 

@@ -58,11 +58,11 @@ const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
           code: ({ children, className }) => {
             const isInline = !className;
             return isInline ? (
-              <code className="bg-gray-800 text-[#34D399] px-2 py-1 rounded text-sm font-mono">
+              <code className="bg-gray-800 text-[#60A5FA] px-2 py-1 rounded text-sm font-mono">
                 {children}
               </code>
             ) : (
-              <code className="text-[#34D399] font-mono text-sm">
+              <code className="text-[#60A5FA] font-mono text-sm">
                 {children}
               </code>
             );
@@ -86,7 +86,7 @@ const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
           a: ({ children, href }) => (
             <a
               href={href}
-              className="text-[#34D399] hover:text-[#2ba085] underline"
+              className="text-[#60A5FA] hover:text-[#3B82F6] underline"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -94,7 +94,7 @@ const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
             </a>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-[#34D399] pl-4 italic text-gray-400 my-4">
+            <blockquote className="border-l-4 border-[#60A5FA] pl-4 italic text-gray-400 my-4">
               {children}
             </blockquote>
           ),

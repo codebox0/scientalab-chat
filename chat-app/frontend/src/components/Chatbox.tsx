@@ -42,10 +42,6 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
   const [input, setInput] = useState<string>("");
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(true);
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<IMessage[]>([]);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
   const [isExportingPDF, setIsExportingPDF] = useState<boolean>(false);
   const [exportSuccess, setExportSuccess] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -125,8 +121,9 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
     };
   }, [onMessage, onTyping, onError]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async (messageText?: string) => {
+    const messageToSend = messageText || input;
+    if (!messageToSend.trim()) return;
 
     setIsLoading(true);
     setError("");
@@ -134,27 +131,26 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
     // Add the user message immediately
     const userMessage: IMessage = {
       id: crypto.randomUUID(),
-      content: input,
+      content: messageToSend,
       role: MessageRole.USER,
       timestamp: new Date().toISOString(),
       sessionId,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    const currentInput = input;
     setInput("");
 
     try {
       if (isConnected) {
         // Use WebSocket for real-time communication
         console.log("📤 Sending message via WebSocket");
-        sendMessage(currentInput, username, `Session de ${username}`);
+        sendMessage(messageToSend, username, `Session de ${username}`);
       } else {
         // Fallback to HTTP API
         console.log("📤 Sending message via HTTP API (fallback)");
         const response = await chatApiService.sendMessage(
           sessionId,
-          currentInput
+          messageToSend
         );
 
         // Add the assistant response
@@ -191,7 +187,7 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
 
       // Remove the user message in case of error
       setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
-      setInput(currentInput); // Restore the input
+      setInput(messageToSend); // Restore the input
       setIsLoading(false);
     }
   };
@@ -218,42 +214,6 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
       localStorage.removeItem("username");
       onLogout();
     }
-  };
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      setShowSearchResults(false);
-      setSearchResults([]);
-      return;
-    }
-
-    setIsSearching(true);
-    setError("");
-
-    try {
-      console.log(`🔍 Recherche: "${searchQuery}" dans session ${sessionId}`);
-      const results = await chatApiService.searchMessages(
-        sessionId,
-        searchQuery,
-        20
-      );
-
-      setSearchResults(results.messages.map(convertMessageToIMessage));
-      setShowSearchResults(true);
-
-      console.log(`✅ ${results.totalCount} résultats trouvés`);
-    } catch (err) {
-      console.error("Erreur de recherche:", err);
-      setError("Erreur lors de la recherche. Veuillez réessayer.");
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const clearSearch = () => {
-    setSearchQuery("");
-    setSearchResults([]);
-    setShowSearchResults(false);
   };
 
   const handleExportPDF = async () => {
@@ -312,10 +272,10 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900">
+    <div className="flex flex-col h-screen bg-white">
       {/* Notification de succès d'export */}
       {exportSuccess && (
-        <div className="fixed top-4 right-4 z-50 bg-[#34D399] text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 transform transition-all duration-300 ease-in-out animate-pulse">
+        <div className="fixed top-4 right-4 z-50 bg-[#60A5FA] text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 transform transition-all duration-300 ease-in-out animate-pulse">
           <svg
             className="w-6 h-6"
             fill="none"
@@ -333,7 +293,7 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
         </div>
       )}
 
-      {/* Header moderne */}
+      {/* Header moderne avec identité Scienta Lab renforcée */}
       <Header
         onLogout={handleLogout}
         isConnected={isConnected}
@@ -341,73 +301,11 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
         isExportingPDF={isExportingPDF}
         userId={username}
         sessionId={sessionId}
+        hasAssistantReplied={messages.some((m) => m.role === "assistant")}
       />
 
-      {/* Barre de recherche */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-3">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center space-x-3">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Rechercher dans cette conversation..."
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#34D399] focus:border-[#34D399]"
-              />
-              {searchQuery && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-            <button
-              onClick={handleSearch}
-              disabled={isSearching || !searchQuery.trim()}
-              className="px-4 py-2 bg-[#34D399] hover:bg-[#2ba085] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center space-x-2"
-            >
-              {isSearching ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Recherche...</span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="w-4 h-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>Rechercher</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Zone de messages - plein écran */}
-      <div className="flex-1 overflow-y-auto bg-gray-900">
+      <div className="flex-1 overflow-y-auto bg-gray-50">
         <div className="max-w-4xl mx-auto py-6">
           {error && (
             <div className="mx-4 mb-4 bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
@@ -446,128 +344,123 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
             </div>
           )}
 
-          {/* Résultats de recherche */}
-          {showSearchResults && (
-            <div className="mx-4 mb-6">
-              <div className="bg-[#34D399]/10 border border-[#34D399]/30 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-[#34D399]">
-                    Résultats de recherche pour &quot;{searchQuery}&quot;
-                  </h3>
-                  <span className="text-sm text-gray-400">
-                    {searchResults.length} résultat(s)
-                  </span>
-                </div>
-                {searchResults.length > 0 ? (
-                  <div className="space-y-3">
-                    {searchResults.map((message, index) => (
-                      <MessageBubble
-                        key={`search-${message.id || index}`}
-                        message={message}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-center py-4">
-                    Aucun résultat trouvé pour &quot;{searchQuery}&quot;
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Message de bienvenue */}
-          {messages.length === 0 &&
-            !isLoadingMessages &&
-            !showSearchResults && (
+          {messages.length === 0 && !isLoadingMessages && (
               <div className="text-center py-12 px-4">
                 <div className="max-w-2xl mx-auto">
-                  <div className="inline-flex items-center space-x-3 text-gray-400 mb-8">
-                    <div className="w-8 h-8 bg-[#34D399] rounded-full flex items-center justify-center">
+                  <div className="inline-flex items-center space-x-3 text-gray-600 mb-8">
+                    <div className="w-8 h-8 bg-[#60A5FA] rounded-full flex items-center justify-center">
                       <span className="text-white text-lg">🧬</span>
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-white">
+                      <h3 className="text-lg font-medium text-gray-900">
                         Bienvenue, {username}!
                       </h3>
-                      <p className="text-sm">
+                      <p className="text-sm text-gray-600">
                         Posez-moi des questions sur la recherche biomédicale.
                       </p>
                     </div>
                   </div>
 
-                  {/* Exemples de questions */}
+                  {/* Exemples de questions cliquables */}
                   <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-gray-300 mb-4">
-                      💡 Exemples de questions que vous pouvez poser :
+                    <h4 className="text-sm font-medium text-gray-700 mb-4">
+                      💡 Cliquez sur un exemple pour commencer :
                     </h4>
 
                     <div className="grid gap-3 text-left">
-                      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                      <button
+                        onClick={() => {
+                          handleSendMessage(
+                            "Trouve-moi des articles récents sur les thérapies géniques pour le cancer du sein"
+                          );
+                        }}
+                        className="bg-white hover:bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#60A5FA] transition-all text-left shadow-sm"
+                      >
                         <div className="flex items-start space-x-3">
-                          <span className="text-[#34D399] text-sm">🔬</span>
+                          <span className="text-[#60A5FA] text-sm">🔬</span>
                           <div>
-                            <p className="text-sm text-gray-300 font-medium">
+                            <p className="text-sm text-gray-900 font-medium">
                               Recherche de littérature
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-gray-600 mt-1">
                               &ldquo;Trouve-moi des articles récents sur les
                               thérapies géniques pour le cancer du sein&rdquo;
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </button>
 
-                      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                      <button
+                        onClick={() => {
+                          handleSendMessage(
+                            "Quels sont les variants du gène BRCA1 associés au cancer ovarien ?"
+                          );
+                        }}
+                        className="bg-white hover:bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#60A5FA] transition-all text-left shadow-sm"
+                      >
                         <div className="flex items-start space-x-3">
-                          <span className="text-[#34D399] text-sm">🧬</span>
+                          <span className="text-[#60A5FA] text-sm">🧬</span>
                           <div>
-                            <p className="text-sm text-gray-300 font-medium">
+                            <p className="text-sm text-gray-900 font-medium">
                               Variants génétiques
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-gray-600 mt-1">
                               &ldquo;Quels sont les variants du gène BRCA1
                               associés au cancer ovarien ?&rdquo;
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </button>
 
-                      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                      <button
+                        onClick={() => {
+                          handleSendMessage(
+                            "Y a-t-il des essais cliniques en cours pour le traitement de la maladie d'Alzheimer ?"
+                          );
+                        }}
+                        className="bg-white hover:bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#60A5FA] transition-all text-left shadow-sm"
+                      >
                         <div className="flex items-start space-x-3">
-                          <span className="text-[#34D399] text-sm">🏥</span>
+                          <span className="text-[#60A5FA] text-sm">🏥</span>
                           <div>
-                            <p className="text-sm text-gray-300 font-medium">
+                            <p className="text-sm text-gray-900 font-medium">
                               Essais cliniques
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-gray-600 mt-1">
                               &ldquo;Y a-t-il des essais cliniques en cours pour
                               le traitement de la maladie d&apos;Alzheimer
                               ?&rdquo;
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </button>
 
-                      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                      <button
+                        onClick={() => {
+                          handleSendMessage(
+                            "Quelles sont les interactions entre la warfarine et les statines ?"
+                          );
+                        }}
+                        className="bg-white hover:bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#60A5FA] transition-all text-left shadow-sm"
+                      >
                         <div className="flex items-start space-x-3">
-                          <span className="text-[#34D399] text-sm">💊</span>
+                          <span className="text-[#60A5FA] text-sm">💊</span>
                           <div>
-                            <p className="text-sm text-gray-300 font-medium">
+                            <p className="text-sm text-gray-900 font-medium">
                               Interactions médicamenteuses
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-gray-600 mt-1">
                               &ldquo;Quelles sont les interactions entre la
                               warfarine et les statines ?&rdquo;
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </button>
                     </div>
 
-                    <p className="text-xs text-gray-500 mt-6">
-                      💬 Tapez votre question dans la barre ci-dessous pour
-                      commencer
+                    <p className="text-xs text-gray-700 mt-6">
+                      💬 Ou tapez votre propre question ci-dessous
                     </p>
                   </div>
                 </div>
@@ -576,7 +469,6 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
 
           {/* Messages */}
           {!isLoadingMessages &&
-            !showSearchResults &&
             messages.map((message, index) => {
               console.log(
                 `🔄 Rendu message ${index}:`,
@@ -631,9 +523,9 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
           {/* Indicateur de chargement */}
           {isLoading && (
             <div className="flex justify-start px-4 mb-6">
-              <div className="bg-gray-800 rounded-2xl px-6 py-4 border border-gray-700">
-                <div className="flex items-center space-x-3 text-gray-400">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#34D399]"></div>
+              <div className="bg-white rounded-2xl px-6 py-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center space-x-3 text-gray-700">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#60A5FA]"></div>
                   <span className="text-sm">L&apos;assistant réfléchit...</span>
                 </div>
               </div>
@@ -643,16 +535,16 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
           {/* Indicateur de frappe */}
           {isTyping && !isLoading && (
             <div className="flex justify-start px-4 mb-6">
-              <div className="bg-gray-800 rounded-2xl px-6 py-4 border border-gray-700">
-                <div className="flex items-center space-x-3 text-gray-400">
+              <div className="bg-white rounded-2xl px-6 py-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center space-x-3 text-gray-700">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-[#34D399] rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-[#60A5FA] rounded-full animate-bounce"></div>
                     <div
-                      className="w-2 h-2 bg-[#34D399] rounded-full animate-bounce"
+                      className="w-2 h-2 bg-[#60A5FA] rounded-full animate-bounce"
                       style={{ animationDelay: "0.1s" }}
                     ></div>
                     <div
-                      className="w-2 h-2 bg-[#34D399] rounded-full animate-bounce"
+                      className="w-2 h-2 bg-[#60A5FA] rounded-full animate-bounce"
                       style={{ animationDelay: "0.2s" }}
                     ></div>
                   </div>
@@ -666,8 +558,8 @@ const Chatbox = ({ sessionId, username, onLogout }: ChatboxProps) => {
         </div>
       </div>
 
-      {/* Zone de saisie fixe en bas */}
-      <div className="flex-shrink-0 bg-gray-900 border-t border-gray-700 p-4">
+      {/* Zone de saisie fixe en bas - Style app de chat moderne */}
+      <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
         <div className="max-w-4xl mx-auto">
           <MessageInputBar
             input={input}

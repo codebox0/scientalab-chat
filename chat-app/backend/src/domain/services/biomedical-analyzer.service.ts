@@ -58,7 +58,7 @@ export class BiomedicalAnalyzerService {
   }
 
   /**
-   * Extract entities from text
+   * Extract entities from text with enhanced biomedical patterns
    * @param text - The text
    * @returns The entities
    */
@@ -68,20 +68,200 @@ export class BiomedicalAnalyzerService {
     variants: string[];
     drugs: string[];
   } {
+    const lowercaseText = text.toLowerCase();
+
+    // Enhanced patterns for better entity extraction
     const patterns = {
+      // Gene symbols: 2+ uppercase letters, followed by optional numbers
+      // Examples: TP53, BRCA1, TNF, IL6
       genes: /\b[A-Z]{2,}[A-Z0-9]*\b/g,
-      variants: /\brs\d+\b/g,
-      diseases:
-        /\b(cancer|diabetes|melanoma|ibd|crohn|colitis|arthritis|alzheimer|parkinson|epilepsy|asthma)\b/g,
-      drugs:
-        /\b(adalimumab|pembrolizumab|infliximab|methotrexate|aspirin|acetaminophen|ibuprofen|prednisone)\b/g,
+
+      // Genetic variants: rs identifiers and mutation notations
+      // Examples: rs113488022, V600E, R273H
+      variants: /\b(rs\d+|[A-Z]\d+[A-Z])\b/g,
+
+      // Comprehensive disease list (English + French terms)
+      diseases: new RegExp(
+        '\\b(' +
+          [
+            // Cancers
+            'cancer',
+            'carcinoma',
+            'carcinome',
+            'melanoma',
+            'mélanome',
+            'leukemia',
+            'leucémie',
+            'lymphoma',
+            'lymphome',
+            'sarcoma',
+            'sarcome',
+            'glioma',
+            'gliome',
+            'breast cancer',
+            'cancer du sein',
+            'lung cancer',
+            'cancer du poumon',
+            'ovarian cancer',
+            'cancer ovarien',
+            // Inflammatory diseases
+            'ibd',
+            'inflammatory bowel disease',
+            'maladie inflammatoire',
+            "crohn's disease",
+            'crohn',
+            'maladie de crohn',
+            'colitis',
+            'colite',
+            'ulcerative colitis',
+            'rectocolite',
+            'arthritis',
+            'arthrite',
+            'rheumatoid arthritis',
+            'polyarthrite',
+            // Neurological
+            "alzheimer's",
+            'alzheimer',
+            "parkinson's",
+            'parkinson',
+            'epilepsy',
+            'épilepsie',
+            'multiple sclerosis',
+            'sclérose en plaques',
+            'stroke',
+            'avc',
+            // Metabolic
+            'diabetes',
+            'diabète',
+            'obesity',
+            'obésité',
+            'metabolic syndrome',
+            'syndrome métabolique',
+            // Respiratory
+            'asthma',
+            'asthme',
+            'copd',
+            'bpco',
+            'pneumonia',
+            'pneumonie',
+            // Cardiovascular
+            'hypertension',
+            'heart failure',
+            'insuffisance cardiaque',
+            'coronary',
+            'coronarien',
+            // Other
+            'depression',
+            'dépression',
+            'schizophrenia',
+            'schizophrénie',
+            'autism',
+            'autisme',
+          ].join('|') +
+          ')\\b',
+        'gi',
+      ),
+
+      // Comprehensive drug list (generic names + brand names)
+      drugs: new RegExp(
+        '\\b(' +
+          [
+            // TNF inhibitors
+            'adalimumab',
+            'humira',
+            'infliximab',
+            'remicade',
+            'etanercept',
+            'enbrel',
+            'golimumab',
+            'simponi',
+            'certolizumab',
+            'cimzia',
+            // Immunotherapy
+            'pembrolizumab',
+            'keytruda',
+            'nivolumab',
+            'opdivo',
+            'atezolizumab',
+            'tecentriq',
+            'ipilimumab',
+            'yervoy',
+            // Chemotherapy
+            'methotrexate',
+            'cisplatin',
+            'carboplatin',
+            'paclitaxel',
+            'taxol',
+            'doxorubicin',
+            'adriamycin',
+            '5-fluorouracil',
+            '5-fu',
+            // Pain/Inflammation
+            'aspirin',
+            'aspirine',
+            'ibuprofen',
+            'advil',
+            'naproxen',
+            'acetaminophen',
+            'paracetamol',
+            'tylenol',
+            // Corticosteroids
+            'prednisone',
+            'prednisolone',
+            'dexamethasone',
+            'hydrocortisone',
+            'methylprednisolone',
+            // Antibiotics
+            'amoxicillin',
+            'amoxicilline',
+            'azithromycin',
+            'ciprofloxacin',
+            'doxycycline',
+            // Anticoagulants
+            'warfarin',
+            'coumadin',
+            'heparin',
+            'héparine',
+            'rivaroxaban',
+            'xarelto',
+            'apixaban',
+            'eliquis',
+            // Statins
+            'atorvastatin',
+            'lipitor',
+            'simvastatin',
+            'rosuvastatin',
+            'crestor',
+            // Diabetes
+            'metformin',
+            'metformine',
+            'insulin',
+            'insuline',
+            'glipizide',
+            // Targeted therapy
+            'trastuzumab',
+            'herceptin',
+            'bevacizumab',
+            'avastin',
+            'rituximab',
+            'rituxan',
+          ].join('|') +
+          ')\\b',
+        'gi',
+      ),
+    };
+
+    // Extract and deduplicate entities
+    const extractAndDeduplicate = (pattern: RegExp, maxCount: number) => {
+      const matches = text.match(pattern) || [];
+      return [...new Set(matches)].slice(0, maxCount);
     };
 
     return {
-      genes: (text.match(patterns.genes) || []).slice(0, 5),
-      diseases: (text.match(patterns.diseases) || []).slice(0, 3),
-      variants: (text.match(patterns.variants) || []).slice(0, 3),
-      drugs: (text.match(patterns.drugs) || []).slice(0, 3),
+      genes: extractAndDeduplicate(patterns.genes, 5),
+      variants: extractAndDeduplicate(patterns.variants, 5),
+      diseases: extractAndDeduplicate(patterns.diseases, 5),
+      drugs: extractAndDeduplicate(patterns.drugs, 5),
     };
   }
 

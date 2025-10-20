@@ -18,67 +18,70 @@ const MessageInputBar = ({
   onSendMessage,
   isLoading = false,
 }: MessageInputBarProps) => {
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
+    // Auto-resize textarea
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !isLoading && input.trim()) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && !isLoading && input.trim()) {
+      e.preventDefault();
       onSendMessage();
     }
   };
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 items-end">
       <div className="flex-1 relative">
-        <input
+        <textarea
           value={input}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           disabled={isLoading}
-          className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 ${
+          rows={1}
+          className={`w-full px-5 py-4 rounded-2xl border resize-none transition-all duration-200 ${
             isLoading
-              ? "bg-gray-800 border-gray-600 text-gray-500 cursor-not-allowed"
-              : "bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-[#34D399] focus:ring-2 focus:ring-[#34D399]/20"
+              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-[#60A5FA] focus:ring-2 focus:ring-[#60A5FA]/20"
           }`}
+          style={{
+            minHeight: "56px",
+            maxHeight: "200px",
+          }}
           placeholder={
             isLoading
               ? "L'assistant réfléchit..."
-              : "Posez une question sur la recherche biomédicale..."
+              : "Tapez votre message... (Shift + Enter pour nouvelle ligne)"
           }
         />
       </div>
       <button
         onClick={onSendMessage}
         disabled={isLoading || !input.trim()}
-        className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 ${
+        className={`min-w-[56px] h-14 rounded-2xl font-medium transition-all duration-200 flex items-center justify-center ${
           isLoading || !input.trim()
-            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-            : "bg-[#34D399] text-white hover:bg-[#2ba085] hover:shadow-lg hover:scale-105"
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#60A5FA] text-white hover:bg-[#3B82F6] hover:shadow-lg hover:scale-105"
         }`}
       >
         {isLoading ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            <span>Envoi...</span>
-          </>
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
         ) : (
-          <>
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-            <span>Envoyer</span>
-          </>
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+            />
+          </svg>
         )}
       </button>
     </div>

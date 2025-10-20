@@ -27,7 +27,7 @@ const JsonRenderer = ({ data, title }: JsonRendererProps) => {
           let cls = "text-gray-300";
           if (/^"/.test(match)) {
             if (/:$/.test(match)) {
-              cls = "text-[#34D399] font-semibold"; // Keys
+              cls = "text-[#60A5FA] font-semibold"; // Keys
             } else {
               cls = "text-blue-300"; // Strings
             }
@@ -54,7 +54,7 @@ const JsonRenderer = ({ data, title }: JsonRendererProps) => {
           <h3 className="text-lg font-medium text-white">{title}</h3>
           <button
             onClick={copyToClipboard}
-            className="px-3 py-1 bg-[#34D399] text-white rounded text-sm hover:bg-[#2ba085] transition-colors"
+            className="px-3 py-1 bg-[#60A5FA] text-white rounded text-sm hover:bg-[#3B82F6] transition-colors"
           >
             Copier
           </button>

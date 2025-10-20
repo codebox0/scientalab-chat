@@ -64,7 +64,7 @@ const BioMCPModal = ({ isOpen, onClose, data }: BioMCPModalProps) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <h2 className="text-xl font-semibold text-white flex items-center">
-            <span className="text-[#34D399] mr-2">📄</span>
+            <span className="text-[#60A5FA] mr-2">📄</span>
             Données BioMCP
           </h2>
           <button
@@ -95,7 +95,7 @@ const BioMCPModal = ({ isOpen, onClose, data }: BioMCPModalProps) => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? "text-[#34D399] border-b-2 border-[#34D399] bg-gray-800"
+                  ? "text-[#60A5FA] border-b-2 border-[#60A5FA] bg-gray-800"
                   : "text-gray-400 hover:text-white hover:bg-gray-800"
               }`}
             >
@@ -115,7 +115,7 @@ const BioMCPModal = ({ isOpen, onClose, data }: BioMCPModalProps) => {
                 </h3>
                 <button
                   onClick={() => copyToClipboard(formatJson(data.request))}
-                  className="px-3 py-1 bg-[#34D399] text-white rounded text-sm hover:bg-[#2ba085] transition-colors"
+                  className="px-3 py-1 bg-[#60A5FA] text-white rounded text-sm hover:bg-[#3B82F6] transition-colors"
                 >
                   Copier
                 </button>
@@ -138,7 +138,7 @@ const BioMCPModal = ({ isOpen, onClose, data }: BioMCPModalProps) => {
                 </h3>
                 <button
                   onClick={() => copyToClipboard(formatJson(data.logs))}
-                  className="px-3 py-1 bg-[#34D399] text-white rounded text-sm hover:bg-[#2ba085] transition-colors"
+                  className="px-3 py-1 bg-[#60A5FA] text-white rounded text-sm hover:bg-[#3B82F6] transition-colors"
                 >
                   Copier
                 </button>
@@ -159,7 +159,7 @@ const BioMCPModal = ({ isOpen, onClose, data }: BioMCPModalProps) => {
           {!hasAnyData && (
             <div className="space-y-4">
               <div className="text-center py-8">
-                <div className="text-[#34D399] text-4xl mb-4">📊</div>
+                <div className="text-[#60A5FA] text-4xl mb-4">📊</div>
                 <h3 className="text-lg font-medium text-white mb-2">
                   Métadonnées disponibles
                 </h3>

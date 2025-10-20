@@ -65,12 +65,12 @@ const ConnexionForm = ({ onLoginSuccess }: ConnexionFormProps) => {
                 }}
               />
               {/* Fallback icon if logo fails to load */}
-              <div className="absolute inset-0 flex items-center justify-center bg-[#34D399] rounded-full text-white font-bold text-lg">
+              <div className="absolute inset-0 flex items-center justify-center bg-[#60A5FA] rounded-full text-white font-bold text-lg">
                 SL
               </div>
             </div>
             <h1 className="text-3xl font-bold text-white">
-              Scienta Lab <span className="text-[#34D399]">Assistant</span>
+              Scienta Lab <span className="text-[#60A5FA]">Assistant</span>
             </h1>
           </div>
           <p className="text-gray-400 mb-8">
@@ -93,7 +93,7 @@ const ConnexionForm = ({ onLoginSuccess }: ConnexionFormProps) => {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Entrez votre nom"
               disabled={isLoading}
-              className="w-full px-4 py-3 border border-gray-600 rounded-xl shadow-sm bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#34D399] focus:border-[#34D399] disabled:opacity-50 transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-600 rounded-xl shadow-sm bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#60A5FA] focus:border-[#60A5FA] disabled:opacity-50 transition-all duration-200"
               autoComplete="username"
             />
           </div>
@@ -107,7 +107,7 @@ const ConnexionForm = ({ onLoginSuccess }: ConnexionFormProps) => {
           <button
             type="submit"
             disabled={isLoading || !username.trim()}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-[#34D399] hover:bg-[#2ba085] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#34D399] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg hover:scale-105"
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-[#60A5FA] hover:bg-[#3B82F6] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#60A5FA] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg hover:scale-105"
           >
             {isLoading ? (
               <div className="flex items-center">
